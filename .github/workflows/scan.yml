@@ -1,4 +1,4 @@
-name: WordPress WPScan - beware of the miss-configs!!! #####
+name: WordPress WPScan - Remediated
 
 on:
   push:
@@ -17,33 +17,15 @@ jobs:
           sudo systemctl start docker
           docker version
 
-      - name: Start MySQL container
+      - name: Start Hardened WordPress Stack
         run: |
-          docker run -d --name wp-db \
-            -e MYSQL_ROOT_PASSWORD=password \
-            -e MYSQL_DATABASE=wordpress \
-            -e MYSQL_USER=wpuser \
-            -e MYSQL_PASSWORD=wppass \
-            -p 3306:3306 \
-            mysql:5.7
-
-      - name: Start WordPress container
-        run: |
-          docker run -d --name wp-site \
-            --link wp-db:mysql \
-            -e WORDPRESS_DB_HOST=host.docker.internal:3306 \
-            -e WORDPRESS_DB_USER=wpuser \
-            -e WORDPRESS_DB_PASSWORD=wppass \
-            -e WORDPRESS_DB_NAME=wordpress \
-            -p 8080:80 \
-            wordpress:latest
+          cd docker
+          docker-compose up -d --build
 
       - name: Wait for WordPress to be ready
         run: |
-          echo "Waiting for WordPress to start..."
           for i in {1..30}; do
             if curl -s http://localhost:8080/wp-content/ | grep -q "<title>"; then
-              echo "WordPress is ready!"
               break
             fi
             sleep 5
@@ -57,10 +39,10 @@ jobs:
 
       - name: Run WPScan (JSON format)
         run: |
-          wpscan --url http://localhost:8080 --enumerate u,vp,vt --format json -o scans/wpscan-initial-report.json --force || true
+          wpscan --url http://localhost:8080 --enumerate u,vp,vt --format json -o scans/wpscan-remediated-report.json --force || true
 
-      - name: Upload WPScan Artifact
+      - name: Upload Remediated WPScan Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wpscan-initial-results
-          path: scans/wpscan-initial-report.json
+          name: wpscan-remediated-results
+          path: scans/wpscan-remediated-report.json
