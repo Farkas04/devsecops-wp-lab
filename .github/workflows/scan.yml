@@ -20,7 +20,7 @@ jobs:
       - name: Start Hardened WordPress Stack
         run: |
           cd docker
-          docker-compose up -d --build
+          docker compose up -d --build
 
       - name: Wait for WordPress to be ready
         run: |
